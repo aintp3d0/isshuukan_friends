@@ -1,0 +1,2 @@
+# isshuukan_friends
+daybook
