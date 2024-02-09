@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# __author__ = 'kira@-築城院 真鍳'
+# __author__ = 'ames0k0'
 
-import sqlite3 #--------------------#
-import logging #--------------------#
-from os import system, rename #-----#
-from sys import path #--------------#
-from random import choice #---------#
-from os.path import exists, dirname #
-from datetime import datetime #-----#
-from scripts.db import DataBase #---#
+import sqlite3
+import logging
+from os import system, rename
+from sys import path
+from random import choice
+from os.path import exists, dirname
+from datetime import datetime
+from scripts.db import DataBase
 
 
 """
-TIME        ->> [ 水曜日2017年11月29日/14時12分56秒 ] 
+TIME        ->> [ 水曜日2017年11月29日/14時12分56秒 ]
 ATR - 著者  ->> 藤宮 香織
 TTL - 表題  ->> 学校の屋根の上
 DSN - 説明  ->> 友人と一緒に昼食を持っていた「祐樹」、彼は卵のパンを食べました

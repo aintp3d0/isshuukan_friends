@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-# __author__ = 'kira@-築城院 真鍳
-
 import sqlite3
 from .endelog import EndeLog
 
@@ -37,11 +32,11 @@ class DataBase:
         if data:
             self.curr.executemany("""INSERT INTO dict(word, rank) VALUES (?, ?)""", data)
             self.conn.commit()
-    
+
     def _update(self, data):
         self.curr.executemany("""UPDATE dict SET rank=rank+? WHERE word=?""", data)
         self.conn.commit()
-    
+
     def _fetch_all(self):
         fetched = self.curr.execute("""SELECT * FROM dict""")
         for ft in fetched:

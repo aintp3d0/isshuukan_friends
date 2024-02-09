@@ -1,10 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-# __author__ = 'kira@-築城院 真鍳'
-
-from os.path import exists #-------------#
-from collections import Counter #--------#
+from os.path import exists
+from collections import Counter
 
 
 class EndeLog:
