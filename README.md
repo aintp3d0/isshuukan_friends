@@ -1,4 +1,10 @@
-# isshuukan_friends
+# isshuukan_friends (一週間フレンズ。)
+```commandline
+python3 main.py
+python3 main.py --atr <(new) author>
+```
+
+### Example
 ```
 ATR - 著者: 藤宮 香織 (author)
 TTL - 表題: 学校の屋根の上 (title)
@@ -14,6 +20,6 @@ EXAMPLE daybook.txt FILE:
 +-------------------------------------------------------------@藤宮 香織
 
 
-EXAMPLE dk.log FILE:
+EXAMPLE data/dk.log FILE:
 [ 月曜日2018年05月28日/01時24分52秒 ] 1∴2∴7|5|5∴6|7∴8|9|10|11|12|13
 ```
