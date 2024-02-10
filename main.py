@@ -113,7 +113,7 @@ class DiaryBook:
     def _generate_message(self):
         title, description = self._get_input()
         day = self.days[datetime.weekday(datetime.now())]
-        time = datetime.today().strftime("[ {}%Y年%m月%d日/%H時%M分%S秒 ]".format(day))
+        time = datetime.today().strftime("[ {}%Y年%m月%d日 / %H時%M分%S秒 ]".format(day))
         message = self.koma.format(time, title, description, self.user)
         system('clear')
         print(message+"\n")
