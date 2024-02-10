@@ -5,11 +5,13 @@
 
 import sqlite3
 import logging
-from os import system, rename
+import argparse
+from os import system, rename, mkdir
 from sys import path
 from random import choice
-from os.path import exists, dirname
+from pathlib import Path
 from datetime import datetime
+
 from scripts.db import DataBase
 
 
@@ -30,6 +32,9 @@ DSN - 説明  ->> 友人と一緒に昼食を持っていた「祐樹」、彼�
 + Python Stack              0.16
 --------------------------------------------------
 """
+
+
+DATA_DIR = Path('data')
 
 
 class CM:
@@ -57,9 +62,10 @@ class CM:
 
 class ParseLog:
 
-    def __init__(self, log, user, koma, dbk):
+    def __init__(self, log, user, database, koma, dbk):
         self.log = log
         self.user = user
+        self.database = database
         self.koma = koma
         self.dbk = dbk
 
@@ -74,7 +80,7 @@ class ParseLog:
             line = stc[1].pop()
             time = line[:28].strip()
             line = line[28:].strip()
-            line = DataBase()._dec(line)
+            line = DataBase(self.database)._dec(line)
             user = line.split(':>>')[0].strip()
             title = line.split(':>>')[1].split(':')[0].strip()
             description = line.split(':>>')[1].split(':')[1].strip()
@@ -85,19 +91,19 @@ class ParseLog:
 
 class DiaryBook:
 
-    def __init__(self):
-        self.db = DataBase()
-        self.user = None
-        self.config = 'user.txt'
-        self.daylog = 'dk.log'
-        self.daybook = 'daybook.txt'
-        self.database = 'scripts/words.db'
+    def __init__(self, user):
+        self.user = user
+        self.config = DATA_DIR / 'user.txt'
+        self.daylog = DATA_DIR / 'dk.log'
+        self.daybook = Path('daybook.txt')
+        self.database = DATA_DIR / 'words.db'
         self.koma = "\n+-------------------{}\n|\n| -> {}\n| -> {}\n|\n"
-        self.koma += "+-------------------------------------------------------------@{}"
+        self.koma += "+-------------------------------------------------------------@{}\n"
         self.days = ['月曜日','火曜日','水曜日','木曜日','金曜日','土曜日','日曜日']
+        self.db = DataBase(self.database)
 
     def _get_input(self):
-        _lambda = lambda x: x.strip().replace(':', '!') 
+        _lambda = lambda x: x.strip().replace(':', '!')
         _dtitle = input("\nTTL - 表題: ")
         _ddescription = input("DSN - 説明: ")
         title = _lambda(_dtitle or '@TTL-表題@')
@@ -119,6 +125,10 @@ class DiaryBook:
         with open(self.config, 'r') as file:
             self.user = file.read()
 
+    def _set_user(self):
+        with open(self.config, 'w') as file:
+            file.write(self.user)
+
     def _check_user(self):
         _1st = ["Hajime", "Saki", "Shougo", "Kaori", "Yuuki" ]
         _2nd = ["九条", "山岸 沙希", "桐生 将吾", "藤宮 香織", "長谷 祐樹"]
@@ -129,14 +139,17 @@ class DiaryBook:
             user = input("\nATR - 著者: ")
             gper = choice(_1st)
             self.user = user or persons[gper]
-            with open(self.config, 'w') as file:
-                file.write(self.user)
+            self._set_user()
 
     def _check_exists(self):
-        dk = exists(self.daybook)
-        dl = exists(self.daylog)
-        db = exists(self.database)
-        self.user = exists(self.config)
+        dk = self.daybook.exists()
+        dl = self.daylog.exists()
+        db = self.database.exists()
+        # passed via argument
+        if self.user:
+            self._set_user()
+        else:
+            self.user = self.config.exists()
         return dk, dl, db
 
     def main(self):
@@ -149,16 +162,27 @@ class DiaryBook:
                 touch = False
                 if self.user:
                     self._get_user()
-                    ParseLog(self.daylog, self.user, self.koma, self.daybook)._log()
+                    ParseLog(self.daylog, self.user, self.database, self.koma, self.daybook)._log()
                 else:
-                    ParseLog(self.daylog, None, self.koma, self.daybook)._log()
+                    ParseLog(self.daylog, None, self.database, self.koma, self.daybook)._log()
             if touch:
-                fn = open(self.daybook, 'w')
-                fn.close()
+                with open(self.daybook, 'w'):
+                    pass
         self._check_user()
         self._generate_message()
 
 
 if __name__ == '__main__':
-    d = DiaryBook()
-    d.main()
+    if not DATA_DIR.exists():
+        DATA_DIR.mkdir()
+
+    parser = argparse.ArgumentParser(description='Set a new ATR (Author)')
+    parser.add_argument('--atr', help='Set new ATR')
+
+    args = parser.parse_args()
+
+    d = DiaryBook(args.atr)
+    try:
+        d.main()
+    except KeyboardInterrupt:
+        pass

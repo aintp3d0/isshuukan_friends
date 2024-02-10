@@ -4,8 +4,8 @@ from .endelog import EndeLog
 
 class DataBase:
 
-    def __init__(self):
-        self.db = 'scripts/words.db'
+    def __init__(self, db_file):
+        self.db = db_file
         self.endelog = EndeLog()
         self.conn = sqlite3.connect(self.db)
         self.curr = self.conn.cursor()
