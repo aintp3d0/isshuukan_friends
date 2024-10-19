@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# __author__ = 'ames0k0'
+# __author__ = "ames0k0"
 
-import sqlite3
-import logging
 import argparse
-from os import system, rename, mkdir
-from sys import path
 from random import choice
 from pathlib import Path
 from datetime import datetime
@@ -15,32 +11,30 @@ from datetime import datetime
 from scripts.db import DataBase
 
 
-"""
-TIME        ->> [ 水曜日2017年11月29日/14時12分56秒 ]
-ATR - 著者  ->> 藤宮 香織
-TTL - 表題  ->> 学校の屋根の上
-DSN - 説明  ->> 友人と一緒に昼食を持っていた「祐樹」、彼は卵のパンを食べました
-
------ [ NAME ] ---------- [ STR.LOW.IDX +1 ] -----
-+ ContextManager            0.3
-+ Dict Comprehension        0.4.9
-+ DRY                       0.4.18
-+ File Manipulation         0.6.9
-+ Functional Programming    0.6.21
-+ List Comprehension        0.12.9.19.20.3
-+ List Slicing              0.12.9.19.20.9
-+ Python Stack              0.16
---------------------------------------------------
-"""
-
-
 DATA_DIR = Path('data')
+
+WEEKDAY_NAME = [
+    '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日'
+]
+DATETIME_FMT = (
+    "[ {}%Y年%m月%d日 / %H時%M分%S秒 ]".format(
+        WEEKDAY_NAME[
+            datetime.now().weekday()
+        ]
+    )
+)
+
+FIRST_NAME = ["Hajime", "Saki", "Shougo", "Kaori", "Yuuki"]
+FULL_NAME = ["九条", "山岸 沙希", "桐生 将吾", "藤宮 香織", "長谷 祐樹"]
+
+CHARACTERS = {
+    k: f'{k}@-{v}' for k, v in zip(FIRST_NAME, FULL_NAME)
+}
 
 
 class CM:
 
-    def __init__(self, fn, message, log):
-        logging.basicConfig(filename=log, level=logging.INFO, format='%(message)s')
+    def __init__(self, fn, message):
         self.fn = fn
         self.ins = None
         self.read = None
@@ -53,94 +47,123 @@ class CM:
         self.write = open(self.fn, 'w')
         self.message += self.ins
         self.write.write(self.message)
-        return logging
 
     def __exit__(self, *exp):
         self.read.close()
         self.write.close()
 
 
-class ParseLog:
-
-    def __init__(self, log, user, database, koma, dbk):
-        self.log = log
-        self.user = user
-        self.database = database
-        self.koma = koma
-        self.dbk = dbk
-
-    def _all_logs(self):
-        with open(self.log, 'r') as file:
-            stc = [i for i in file.readlines()]
-        return len(stc), stc
-
-    def _log(self):
-        stc = self._all_logs()
-        for _ in range(stc[0]):
-            line = stc[1].pop()
-            time = line[:28].strip()
-            line = line[28:].strip()
-            line = DataBase(self.database)._dec(line)
-            user = line.split(':>>')[0].strip()
-            title = line.split(':>>')[1].split(':')[0].strip()
-            description = line.split(':>>')[1].split(':')[1].strip()
-            with open(self.dbk, 'a') as _up_file:
-                _get_koma = self.koma.format(time, title, description, user)
-                _up_file.write(_get_koma)
-
-
 class Koma:
-    __slots__ = ("koma", "dsn_count")
-    def __init__(self):
-        self.koma = ""
-        self.dsn_count = 0
-    def dt(self, dt: str):
-        self.koma += f"\n+-------------------{dt}\n|\n"
-    def ttl(self, ttl: str):
-        self.koma += f"\n| -> {ttl}\n"
-    def dsn(self, dsn: str):
-        if self.dsn_count == 0:
-            self.koma += f"| -> {dsn}\n"
-        else:
-            self.koma += f"|    -> {dsn}\n"
-    def usr(self, usr: str):
-        self.koma += f"|\n+-------------------------------------------------------------@{usr}\n"
+    MESSAGE = ""
+
+    def add_time(self, time):
+        self.MESSAGE += f"\n+-------------------{time}\n|\n"
+
+    def add_title(self, title):
+        self.MESSAGE += f"| -> {title}\n"
+
+    def add_multiline_descriptions(
+            self, multiline_descriptions, new_line_symbol: str = "\n"
+    ):
+        for idx, description in enumerate(multiline_descriptions):
+            if not idx:
+                self.MESSAGE += f"| -> {description}\n"
+                continue
+            if description == new_line_symbol:
+                self.MESSAGE += f"|\n"
+                continue
+            self.MESSAGE += f"|    {description}\n"
+
+    def add_user(self, user):
+        self.MESSAGE += f"|\n+-------------------------------------------------------------@{user}\n"
+
+    def get_message(self):
+        return self.MESSAGE
 
 
 class DiaryBook:
+    __slots__ = (
+        "user", "config",
+        "daybook", "database",
+        "koma", "db"
+    )
 
     def __init__(self, user):
         self.user = user
         self.config = DATA_DIR / 'user.txt'
-        self.daylog = DATA_DIR / 'dk.log'
         self.daybook = Path('daybook.txt')
-        self.database = DATA_DIR / 'words.db'
-        self.koma = "\n+-------------------{}\n|\n| -> {}\n| -> {}\n|\n"
-        self.koma += "+-------------------------------------------------------------@{}\n"
-        self.days = ['月曜日','火曜日','水曜日','木曜日','金曜日','土曜日','日曜日']
-        self.db = DataBase(self.database)
+        self.db = DataBase(DATA_DIR / 'words.db')
+        self.koma = Koma()
 
-    def _get_dsn_input(self):
-        pass
+    @staticmethod
+    def replace_symbols(target: str) -> str:
+        return target.strip().replace(':', '!')
 
-    def _get_input(self):
-        _lambda = lambda x: x.strip().replace(':', '!')
-        _dtitle = input("\nTTL - 表題: ")
-        _ddescription = input("DSN - 説明: ")
-        title = _lambda(_dtitle or '@TTL-表題@')
-        description = _lambda(_ddescription or '@DSN-説明@')
-        return title, description
+    def get_multiline_description(self, new_line_symbol: str = "\n"):
+        """Multiline description
+        """
+        multiline = []
+        break_in_count = 3
 
-    def _generate_message(self):
-        title, description = self._get_input()
-        day = self.days[datetime.weekday(datetime.now())]
-        time = datetime.today().strftime("[ {}%Y年%m月%d日 / %H時%M分%S秒 ]".format(day))
-        message = self.koma.format(time, title, description, self.user)
-        system('clear')
-        print(message+"\n")
-        with CM(self.daybook, message, self.daylog) as conmen:
-            log = "{} :>> {}: {}".format(self.user, title, description)
-            conmen.info("{} {}".format(time, self.db._data(log)))
+        while True:
+            description = input("DSN - 説明: ")
+            if description:
+                description = self.replace_symbols(description)
+                break_in_count = 3
+            else:
+                description = new_line_symbol
+                break_in_count -= 1
+            if not break_in_count:
+                break
+            multiline.append(description)
+
+        # pop right
+        while True:
+            if not multiline:
+                break
+            if multiline[0] != new_line_symbol:
+                break
+            multiline.pop(0)
+
+        # pop left
+        while True:
+            if not multiline:
+                break
+            if multiline[-1] != new_line_symbol:
+                break
+            multiline.pop()
+
+        return multiline
+
+    def get_user_input(self):
+        """Getting the user input
+        """
+        title = input("\nTTL - 表題: ")
+        title = self.replace_symbols(title)
+        if not title:
+            title = "@TTL-表題@"
+
+        multiline_descriptions = self.get_multiline_description()
+        if not multiline_descriptions:
+            multiline_descriptions = ["@DSN-説明@"]
+
+        return title, multiline_descriptions
+
+    def generate_message(self):
+        title, multiline_descriptions = self.get_user_input()
+        time = datetime.today().strftime(DATETIME_FMT)
+
+        self.koma.add_time(time)
+        self.koma.add_title(title)
+        self.koma.add_multiline_descriptions(multiline_descriptions)
+        self.koma.add_user(self.user)
+
+        message = self.koma.get_message()
+
+        print(message)
+
+        with CM(self.daybook, message):
+            return None
 
     def _get_user(self):
         with open(self.config, 'r') as file:
@@ -151,47 +174,38 @@ class DiaryBook:
             file.write(self.user)
 
     def _check_user(self):
-        _1st = ["Hajime", "Saki", "Shougo", "Kaori", "Yuuki" ]
-        _2nd = ["九条", "山岸 沙希", "桐生 将吾", "藤宮 香織", "長谷 祐樹"]
-        persons = {k: f'{k}@-{v}' for k, v in zip(_1st, _2nd)}
+        # TODO: make `user` as setter
         if self.user:
             self._get_user()
-        else:
-            user = input("\nATR - 著者: ")
-            gper = choice(_1st)
-            self.user = user or persons[gper]
+            return None
+
+        user = input("\nATR - 著者: ")
+        user = user.strip()
+        if user:
+            self.user = user
             self._set_user()
+            return None
+
+        self.user = CHARACTERS[
+            choice(FIRST_NAME)
+        ]
+        self._set_user()
 
     def _check_exists(self):
         dk = self.daybook.exists()
-        dl = self.daylog.exists()
-        db = self.database.exists()
         # passed via argument
         if self.user:
             self._set_user()
         else:
             self.user = self.config.exists()
-        return dk, dl, db
+        return dk
 
     def main(self):
-        dk, dl, db = self._check_exists()
-        if not db:
-            raise Exception('DataBase not exists')
+        dk = self._check_exists()
         if not dk:
-            touch = True
-            if dl:
-                touch = False
-                if self.user:
-                    self._get_user()
-                    ParseLog(self.daylog, self.user, self.database, self.koma, self.daybook)._log()
-                else:
-                    ParseLog(self.daylog, None, self.database, self.koma, self.daybook)._log()
-            if touch:
-                # XXX: use Path.touch() at ParseLog
-                with open(self.daybook, 'w'):
-                    pass
+            self.daybook.touch()
         self._check_user()
-        self._generate_message()
+        self.generate_message()
 
 
 if __name__ == '__main__':

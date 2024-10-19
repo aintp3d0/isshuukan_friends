@@ -18,16 +18,7 @@ EXAMPLE daybook.txt FILE:
 | -> 友人と一緒に昼食を持っていた「祐樹」、彼は卵のパンを食べました
 |
 +-------------------------------------------------------------@藤宮 香織
-
-
-EXAMPLE data/dk.log FILE:
-[ 月曜日2018年05月28日/01時24分52秒 ] 1∴2∴7|5|5∴6|7∴8|9|10|11|12|13
 ```
 
 ### TODO
-- [ ] use `Koma`
-  - [ ] DiaryBook
-  - [ ] ParseLog
-- [ ] Update
-- [ ] Delete
 - [ ] Rename `protected-members` (methods)
