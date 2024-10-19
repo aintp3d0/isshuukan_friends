@@ -89,6 +89,24 @@ class ParseLog:
                 _up_file.write(_get_koma)
 
 
+class Koma:
+    __slots__ = ("koma", "dsn_count")
+    def __init__(self):
+        self.koma = ""
+        self.dsn_count = 0
+    def dt(self, dt: str):
+        self.koma += f"\n+-------------------{dt}\n|\n"
+    def ttl(self, ttl: str):
+        self.koma += f"\n| -> {ttl}\n"
+    def dsn(self, dsn: str):
+        if self.dsn_count == 0:
+            self.koma += f"| -> {dsn}\n"
+        else:
+            self.koma += f"|    -> {dsn}\n"
+    def usr(self, usr: str):
+        self.koma += f"|\n+-------------------------------------------------------------@{usr}\n"
+
+
 class DiaryBook:
 
     def __init__(self, user):
@@ -101,6 +119,9 @@ class DiaryBook:
         self.koma += "+-------------------------------------------------------------@{}\n"
         self.days = ['月曜日','火曜日','水曜日','木曜日','金曜日','土曜日','日曜日']
         self.db = DataBase(self.database)
+
+    def _get_dsn_input(self):
+        pass
 
     def _get_input(self):
         _lambda = lambda x: x.strip().replace(':', '!')
@@ -166,6 +187,7 @@ class DiaryBook:
                 else:
                     ParseLog(self.daylog, None, self.database, self.koma, self.daybook)._log()
             if touch:
+                # XXX: use Path.touch() at ParseLog
                 with open(self.daybook, 'w'):
                     pass
         self._check_user()
