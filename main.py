@@ -34,17 +34,19 @@ CHARACTERS = {
 
 class CM:
 
-    def __init__(self, fn, message):
-        self.fn = fn
+    def __init__(self, daybook, message):
+        self.daybook = daybook
         self.ins = None
         self.read = None
         self.write = None
         self.message = message
 
     def __enter__(self):
-        self.read = open(self.fn, 'r')
+        if self.daybook:
+            self.daybook.touch()
+        self.read = open(self.daybook, 'r')
         self.ins = self.read.read()
-        self.write = open(self.fn, 'w')
+        self.write = open(self.daybook, 'w')
         self.message += self.ins
         self.write.write(self.message)
 
@@ -175,38 +177,40 @@ class DiaryBook:
         with open(self.config, 'w') as file:
             file.write(self.user)
 
-    def _check_user(self):
-        # TODO: make `user` as setter
+    def _init_user(self):
+        # argument
         if self.user:
-            self._get_user()
+            self._set_user()
             return None
 
+        # from file
+        if self.config.exists():
+            self._get_user()
+            self._set_user()
+            return None
+
+        # from user
         user = input("\nATR - 著者: ")
         user = user.strip()
         if user:
             self.user = user
-            self._set_user()
-            return None
-
-        self.user = CHARACTERS[
-            choice(FIRST_NAME)
-        ]
+        else:
+            self.user = CHARACTERS[choice(FIRST_NAME)]
         self._set_user()
 
-    def _check_exists(self):
-        dk = self.daybook.exists()
-        # passed via argument
-        if self.user:
-            self._set_user()
-        else:
-            self.user = self.config.exists()
-        return dk
+    def _restore_daybook(self):
+        if self.daybook.exists():
+            return None
+        with open(self.daybook, "w") as ftw:
+            for _, message in self.db.get_messages():
+                ftw.write(message)
+
+    def init_dependencies(self):
+        self._init_user()
+        self._restore_daybook()
 
     def main(self):
-        dk = self._check_exists()
-        if not dk:
-            self.daybook.touch()
-        self._check_user()
+        self.init_dependencies()
         self.generate_message()
 
 
