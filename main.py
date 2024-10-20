@@ -163,7 +163,9 @@ class DiaryBook:
         print(message)
 
         with CM(self.daybook, message):
-            return None
+            pass
+
+        self.db.add_message(message=message)
 
     def _get_user(self):
         with open(self.config, 'r') as file:
