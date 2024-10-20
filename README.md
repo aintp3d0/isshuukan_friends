@@ -1,4 +1,5 @@
-# Diary for 藤宮 香織 (一週間フレンズ。)
+# Diary for 藤宮 香織
+- Anime: 一週間フレンズ。
 ```bash
 python3 main.py
 # or
